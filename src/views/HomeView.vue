@@ -20,7 +20,7 @@
         </template>
 
         <template v-slot:content>
-          <img :src=locJsonVal alt="">
+          <img :src=loc.image alt="">
         </template>
 
         <template v-slot:description>
@@ -43,7 +43,7 @@ export default {
 
   setup() {
 
-    let weatherLocation = reactive([{ id: 0, location: "" }]);
+    let weatherLocation = reactive([{ id: 0, location: "", image:"" }]);
     let inp = ref("")
     let updateVal = ref("")
     let id = ref(0)
@@ -54,26 +54,40 @@ export default {
       checkUpdateStatus: false
     })
 
-    async function getApi() {
-      const info = await fetch("http://en.wikipedia.org/w/api.php?action=query&prop=pageimages&format=json&origin=*&piprop=original&titles=" + inp.value)
-      const json = await info.json();
-      const locJson = json
-      let temp = locJson.query.pages
-      temp = temp[Object.keys(temp)[0]]
-      locJsonVal.value = temp.original.source
-      console.log(locJsonVal.value)
+    async function getApi(upd?:string) {
+      if(!upd){
+        const info = await fetch("http://en.wikipedia.org/w/api.php?action=query&prop=pageimages&format=json&origin=*&piprop=original&titles=" + inp.value)
+        const json = await info.json();
+        const locJson = json
+        let temp = locJson.query.pages
+        temp = temp[Object.keys(temp)[0]]
+        locJsonVal.value = temp.original.source
+        console.log("entered")
+      }
+      else{
+        const info = await fetch("http://en.wikipedia.org/w/api.php?action=query&prop=pageimages&format=json&origin=*&piprop=original&titles=" + upd)
+        const json = await info.json();
+        const locJson = json
+        let temp = locJson.query.pages
+        temp = temp[Object.keys(temp)[0]]
+        console.log("entered")
+        return temp.original.source
+      }
+
     }
 
-    const generateCard = () => {
-      getApi()
+    const generateCard = async () => {
+      await getApi()
       let obj = reactive({
         id: id.value,
-        location: inp.value
+        location: inp.value,
+        image : locJsonVal.value,
       });
       if (inp.value) {
         weatherLocation.push(obj)
       }
       id.value += 1;
+      console.log(obj.image,obj.location)
     };
 
 
@@ -100,7 +114,7 @@ export default {
 
 
 
-    const saved = (a: number) => {
+    const saved = async (a: number) => {
       flags.checkUpdateStatus = false;
       console.log("saved")
       let i = 0;
@@ -110,6 +124,8 @@ export default {
         }
       }
       weatherLocation[i].location = updateVal.value
+      weatherLocation[i].image = await getApi(updateVal.value)
+      console.log(weatherLocation[i].image)
 
     }
     return {
@@ -121,7 +137,7 @@ export default {
       flags,
       saved,
       updateVal,
-      locJsonVal
+      
     }
   }
 }
