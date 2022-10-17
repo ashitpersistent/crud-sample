@@ -30,11 +30,11 @@
         </template>
 
         <template v-slot:content >
-          <img src="https://www.google.com/maps/vt/data=JDzAvDVk4ptHwCeUBZbtFsTvzO9B9YMnvFQJvN1ywS3mD3kqWY7woH8wQKAgj0p56pqBCz7AmiNv5lI6WmOYYccp60MXPTvKp7nS3Eh3avliWd62_-dtOmHYh5t_QY3PeX2xoWJYDN-NPdddYjYeIjLL5heMfR5DplFDYzPOeDFYZr_m_w_O7PtBADg2h4438mslL-yfbn1RHhJwqUsMVjAZO8CDw9YPnkb-NmdrAai5aQD7aRirqHt0eDwfrXF3qVw" alt="">
+          <img :src=locJsonVal alt="">
         </template>
 
          <template v-slot:description >
-          {{"sample"}}
+          {{"description"}}
         </template>
 
       </Card>
@@ -45,6 +45,7 @@
 <script lang="ts">
 import Card from '@/components/Card.vue'
 import { reactive,ref} from 'vue'
+
 export default{
   components:{Card},
 
@@ -56,13 +57,25 @@ export default{
     let inp = ref("")
     let updateVal = ref("")
     let id= ref(0)
+    let locJsonVal = ref(null) as any
     weatherLocation.pop()
-
+    
     const flags = reactive({
       checkUpdateStatus:false
     })
-    
+
+    async function getApi(){
+      const info = await fetch("http://en.wikipedia.org/w/api.php?action=query&prop=pageimages&format=json&origin=*&piprop=original&titles="+inp.value)
+      const json = await info.json();
+      const locJson = json  
+      let temp = locJson.query.pages
+      temp = temp[Object.keys(temp)[0]]
+      locJsonVal.value =  temp.original.source
+      console.log(locJsonVal.value)
+    }
+
     const generateCard = () =>{
+      getApi()
       let obj=reactive({
       id:id.value,
       location:inp.value,
@@ -92,7 +105,10 @@ export default{
       console.log("updating..",a)
       flags.checkUpdateStatus = true;
 
-    }    
+    } 
+    
+    
+
 
     const saved = (a:number)=>{
       flags.checkUpdateStatus = false;
@@ -114,7 +130,8 @@ export default{
       updateEl,
       flags,
       saved,
-      updateVal
+      updateVal,
+      locJsonVal
     }
   }
 }
